@@ -79,10 +79,19 @@ if not GAMESTATE:IsCourseMode() then
 		CurrentSongChangedMessageCommand=function(self) self:playcommand("SetCD") end,
 		SwitchFocusToGroupsMessageCommand=function(self) self:GetChild("CdTitle"):visible(false) end,
 		SetCDCommand=function(self)
+			self.usb_cdtitle_path = nil
 			SongOrCourse = GAMESTATE:IsCourseMode() and GAMESTATE:GetCurrentCourse() or GAMESTATE:GetCurrentSong()
 			if SongOrCourse and SongOrCourse:HasCDTitle() then
+				local path = GAMESTATE:GetCurrentSong():GetCDTitlePath()
+				local screen = SCREENMAN:GetTopScreen()
+				if SongOrCourse:IsCustomSong() then
+					self.usb_cdtitle_path = path
+					self:visible(false)
+					if screen.CacheCustomSongAsset then screen:CacheCustomSongAsset(path) end
+					return
+				end
 				self:visible(true)
-				self:Load( GAMESTATE:GetCurrentSong():GetCDTitlePath() )
+				self:Load(path)
 				local dim1, dim2 = math.max(self:GetWidth(), self:GetHeight()), math.min(self:GetWidth(), self:GetHeight())
 				local ratio = math.max(dim1 / dim2, 2.5)
 
@@ -92,6 +101,17 @@ if not GAMESTATE:IsCourseMode() then
 				self:finishtweening():addrotationy(0):linear(.5):addrotationy(360)
 			else
 				self:visible(false)
+			end
+		end,
+		CustomSongAssetReadyMessageCommand=function(self, params)
+			if params.Source == self.usb_cdtitle_path and params.Success then
+				self:visible(true):Load(params.Path)
+				local dim1, dim2 = math.max(self:GetWidth(), self:GetHeight()), math.min(self:GetWidth(), self:GetHeight())
+				local ratio = math.max(dim1 / dim2, 2.5)
+				local toScale = self:GetWidth() > self:GetHeight() and self:GetWidth() or self:GetHeight()
+				self:xy((bannerWidth - 30) / 2, (bannerHeight - 30)/ 2)
+				self:zoom(22 / toScale * ratio)
+				self:finishtweening():addrotationy(0):linear(.5):addrotationy(360)
 			end
 		end
 	}

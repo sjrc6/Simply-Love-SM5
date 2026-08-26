@@ -112,6 +112,11 @@ local song_mt = {
 						LoseFocusCommand=function(subself) subself:pause():setstate(0):position(0):linear(0.2):zoomto(55,55):stopeffect() end,
 						SlideToTopCommand=function(subself) subself:linear(0.3):zoomto(110,110):rotationy(360):sleep(0):rotationy(0) end,
 						SlideBackIntoGridCommand=function(subself) subself:linear(0.12):zoomto(126,126) end,
+						CustomSongAssetReadyMessageCommand=function(subself, params)
+							if params.Source == self.img_path and params.Success then
+								subself:Load(params.Path):queuecommand("Refresh")
+							end
+						end,
 					},
 				},
 
@@ -278,7 +283,11 @@ local song_mt = {
 				end
 
 				-- thank you, based Jousway
-				if (Sprite.LoadFromCached ~= nil) then
+				local screen = SCREENMAN:GetTopScreen()
+				if song:IsCustomSong() then
+					if screen.CacheCustomSongAsset then screen:CacheCustomSongAsset(self.img_path) end
+					self.banner:Load( THEME:GetPathB("ScreenSelectMusicCasual", "overlay/img/no-jacket.png") )
+				elseif (Sprite.LoadFromCached ~= nil) then
 					self.banner:LoadFromCached(self.img_type, self.img_path)
 
 				-- support SM5.0.12 begrudgingly
